@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "api.key",
+    "type": "java.lang.String",
+    "description": "A description for 'api.key'"
+  },
+  {
+    "name": "ai.api.key",
+    "type": "java.lang.String",
+    "description": "A description for 'ai.api.key'"
+  }
+]}

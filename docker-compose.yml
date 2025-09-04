@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Ashwa@26
+      MYSQL_DATABASE: ragdb_chatSystem
+      MYSQL_USER: Hismath
+      MYSQL_PASSWORD: Ashwa@26
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"  # changed to avoid conflict
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      API_KEY: ${API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      spring.datasource.url: jdbc:mysql://db:3306/ragdb_chatSystem?useSSL=false&allowPublicKeyRetrieval=true
+      spring.datasource.username: Hismath
+      spring.datasource.password: Ashwa@26
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      - db
+
+volumes:
+  db_data:

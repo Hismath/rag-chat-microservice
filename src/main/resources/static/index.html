@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Chat Session</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Create New Chat Session</h1>
+        <form id="createSessionForm" class="space-y-4">
+            <div>
+                <label for="userId" class="block text-sm font-medium text-gray-700">User ID</label>
+                <input type="text" id="userId" name="userId" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Session Title</label>
+                <input type="text" id="title" name="title" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="apiKey" class="block text-sm font-medium text-gray-700">API Key</label>
+                <input type="text" id="apiKey" name="apiKey" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Create Session
+            </button>
+        </form>
+        <div id="response" class="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200 hidden">
+            <h2 class="font-semibold text-lg text-gray-800">API Response:</h2>
+            <pre id="response-data" class="mt-2 text-gray-600 whitespace-pre-wrap break-words"></pre>
+        </div>
+        <div id="error" class="mt-6 p-4 bg-red-100 rounded-md border border-red-200 text-red-700 hidden">
+            <h2 class="font-semibold text-lg">Error:</h2>
+            <pre id="error-message" class="mt-2 text-sm whitespace-pre-wrap break-words"></pre>
+        </div>
+    </div>
+    <script>
+        document.getElementById('createSessionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const userId = document.getElementById('userId').value;
+            const title = document.getElementById('title').value;
+            const apiKey = document.getElementById('apiKey').value; // Get the API key
+            const responseDiv = document.getElementById('response');
+            const errorDiv = document.getElementById('error');
+            const responseDataPre = document.getElementById('response-data');
+            const errorMessagePre = document.getElementById('error-message');
+
+            responseDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey // Add the API key header here
+                    },
+                    body: JSON.stringify({ userId, title })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDataPre.textContent = JSON.stringify(data, null, 2);
+                    responseDiv.classList.remove('hidden');
+                } else {
+                    errorMessagePre.textContent = JSON.stringify(data, null, 2);
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorMessagePre.textContent = `Failed to create session: ${error.message}`;
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
