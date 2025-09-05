@@ -31,21 +31,28 @@ public class ChatSessionController {
 
     @PostMapping("/api/sessions")
     public ResponseEntity<ChatSessionDto> create(@RequestBody CreateSessionRequest req, UriComponentsBuilder uri) {
-        String normTitle = req.getTitle().trim().replaceAll("\\s+"," ");
+        // --- validate input ---
+        if (req.getUserId() == null || req.getUserId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId must not be empty");
+        }
+        if (req.getTitle() == null || req.getTitle().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be empty");
+        }
+
+        String normTitle = req.getTitle().trim().replaceAll("\\s+", " ");
         boolean existed = sessionRepository.existsByUserIdAndTitleAndDeletedFalse(req.getUserId(), normTitle);
 
         ChatSession saved = sessionService.createSession(req);
         ChatSessionDto dto = ChatSessionDto.from(saved); // map entity → DTO
 
         if (existed) {
-            // Already there → idempotent OK
             return ResponseEntity.ok(dto); // 200
         } else {
-            // Newly created → 201 + Location
             URI location = uri.path("/api/sessions/{id}").buildAndExpand(saved.getId()).toUri();
             return ResponseEntity.created(location).body(dto); // 201
         }
     }
+
 
 
     @GetMapping("/user/{userId}")

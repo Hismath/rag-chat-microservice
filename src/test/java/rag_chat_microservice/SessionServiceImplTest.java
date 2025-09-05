@@ -6,8 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import rag_chat_microservice.dto.ChatSessionDto;
 import rag_chat_microservice.dto.CreateSessionRequest;
 import rag_chat_microservice.model.ChatSession;
+import rag_chat_microservice.repository.MessageRepository;
 import rag_chat_microservice.repository.SessionRepository;
 import rag_chat_microservice.service.SessionServiceImpl;
 
@@ -25,10 +27,13 @@ class SessionServiceImplTest {
 
     @Mock
     private SessionRepository sessionRepository;
+    
+    @Mock
+    private MessageRepository messageRepository;
+
 
     private CreateSessionRequest createRequest;
-    private ChatSession testSession;
-    private final UUID testSessionId = UUID.randomUUID();
+    private UUID testSessionId;
 
     @BeforeEach
     void setUp() {
@@ -36,42 +41,101 @@ class SessionServiceImplTest {
         createRequest.setUserId("test-user-123");
         createRequest.setTitle("Test Session");
 
-        testSession = ChatSession.builder()
-                .id(testSessionId)
-                .userId("test-user-123")
-                .title("Test Session")
-                .build();
+        testSessionId = UUID.randomUUID();
     }
 
     @Test
     void createSession_shouldSaveAndReturnNewSession() {
-        // Given: The repository is configured to return our mocked session when its 'save' method is called.
+        ChatSession testSession = ChatSession.builder()
+                .id(testSessionId)
+                .userId(createRequest.getUserId())
+                .title(createRequest.getTitle())
+                .favorite(false)
+                .build();
+
         when(sessionRepository.save(any(ChatSession.class))).thenReturn(testSession);
 
-        // When: We call the method on our service that we want to test.
         ChatSession createdSession = sessionService.createSession(createRequest);
 
-        // Then: We verify that the repository's 'save' method was called exactly once with any ChatSession object.
         verify(sessionRepository, times(1)).save(any(ChatSession.class));
-
-        // And: We assert that the returned session has the correct ID and user.
-        assertNotNull(createdSession.getId());
-        assertEquals(createRequest.getUserId(), createdSession.getUserId());
+        assertAll(
+                () -> assertNotNull(createdSession.getId(), "Session ID should not be null"),
+                () -> assertEquals(createRequest.getUserId(), createdSession.getUserId()),
+                () -> assertEquals(createRequest.getTitle(), createdSession.getTitle())
+        );
     }
 
     @Test
     void getSession_shouldReturnExistingSession() {
-        // Given: The repository is configured to return an optional containing our session when 'findById' is called with the correct ID.
+        ChatSession testSession = ChatSession.builder()
+                .id(testSessionId)
+                .userId("test-user-123")
+                .title("Test Session")
+                .build();
+
         when(sessionRepository.findById(testSessionId)).thenReturn(Optional.of(testSession));
 
-        // When: We call the method on our service.
         ChatSession foundSession = sessionService.getSession(testSessionId);
 
-        // Then: We verify that the repository's 'findById' method was called once with the correct ID.
         verify(sessionRepository, times(1)).findById(testSessionId);
-
-        // And: We assert that the returned session is the one we expected.
         assertNotNull(foundSession);
         assertEquals(testSessionId, foundSession.getId());
     }
+
+    @Test
+    void getSession_shouldThrowExceptionWhenNotFound() {
+        when(sessionRepository.findById(testSessionId)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> sessionService.getSession(testSessionId));
+        verify(sessionRepository, times(1)).findById(testSessionId);
+    }
+
+    @Test
+    void updateSession_shouldUpdateAndReturnUpdatedSession() {
+        ChatSession testSession = ChatSession.builder()
+                .id(testSessionId)
+                .userId("test-user-123")
+                .title("Test Session")
+                .favorite(false)
+                .build();
+
+        ChatSessionDto updateDto = new ChatSessionDto();
+        updateDto.setTitle("Updated Session");
+        updateDto.setFavorite(true);
+
+        when(sessionRepository.findById(testSessionId)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatSession updatedSession = sessionService.updateSession(testSessionId, updateDto);
+
+        verify(sessionRepository, times(1)).save(testSession);
+        assertEquals("Updated Session", updatedSession.getTitle());
+        assertTrue(updatedSession.isFavorite());
+    }
+
+    @Test
+    void softDeleteSession_shouldMarkSessionAsDeleted() {
+        // Mock repository to always return a session
+        when(sessionRepository.findById(any(UUID.class)))
+                .thenAnswer(invocation -> Optional.of(
+                        ChatSession.builder()
+                                .id(testSessionId)
+                                .userId("test-user-123")
+                                .title("Test Session")
+                                .deleted(false)
+                                .build()
+                ));
+
+        // Save returns the argument
+        when(sessionRepository.save(any(ChatSession.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Call delete
+        sessionService.deleteSession(testSessionId);
+
+        // Verify
+        verify(sessionRepository, times(1)).findById(testSessionId);
+        verify(sessionRepository, times(1)).save(any(ChatSession.class));
+    }
+
 }

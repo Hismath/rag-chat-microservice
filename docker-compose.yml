@@ -1,20 +1,21 @@
-version: '3.8'
 services:
   db:
     image: mysql:8.0
+    container_name: ragchat_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: Ashwa@26
       MYSQL_DATABASE: ragdb_chatSystem
       MYSQL_USER: Hismath
       MYSQL_PASSWORD: Ashwa@26
+    ports:
+      - "3307:3306"  # avoid conflict with local MySQL
     volumes:
       - db_data:/var/lib/mysql
-    ports:
-      - "3307:3306"  # changed to avoid conflict
 
   app:
     build: .
+    container_name: ragchat_app
     restart: always
     ports:
       - "8082:8082"
@@ -25,6 +26,15 @@ services:
       spring.datasource.username: Hismath
       spring.datasource.password: Ashwa@26
       SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      - db
+
+  adminer:
+    image: adminer
+    container_name: ragchat_adminer
+    restart: always
+    ports:
+      - "8081:8080"
     depends_on:
       - db
 

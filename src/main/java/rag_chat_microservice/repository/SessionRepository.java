@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import rag_chat_microservice.model.ChatSession;
 
@@ -17,6 +19,9 @@ public interface SessionRepository extends JpaRepository<ChatSession, UUID> {
     Optional<ChatSession> findByUserIdAndTitleAndDeletedFalse(String userId, String title);
     boolean existsByUserIdAndTitleAndDeletedFalse(String userId, String title);
     boolean existsByUserId(String userId);
+    @Query("SELECT s FROM ChatSession s WHERE s.id = :id AND s.deleted = false")
+    Optional<ChatSession> findActiveById(@Param("id") UUID id);
+
 
 }
 

@@ -100,7 +100,7 @@ public class SessionServiceImpl implements SessionService {
         }
     }
 
-    @Override
+    /*@Override
     public void deleteSession(UUID sessionId) {
         log.warn("Soft deleting session with ID: {}", sessionId);
         ChatSession session = getSession(sessionId);
@@ -112,7 +112,29 @@ public class SessionServiceImpl implements SessionService {
         messageRepository.softDeleteBySessionId(sessionId);
 
         log.info("Session with ID: {} and its messages successfully soft deleted.", sessionId);
+    }*/
+    @Override
+    public void deleteSession(UUID sessionId) {
+        // Fetch session even if already soft deleted
+        ChatSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (Boolean.TRUE.equals(session.getDeleted())) {
+            log.info("Session {} is already deleted.", sessionId);
+            return;
+        }
+
+        log.warn("Soft deleting session with ID: {}", sessionId);
+        session.setDeleted(true);
+        session.setUpdatedAt(LocalDateTime.now());
+        sessionRepository.save(session);
+
+        // Soft delete all messages under this session
+        messageRepository.softDeleteBySessionId(sessionId);
+
+        log.info("Session with ID: {} and its messages successfully soft deleted.", sessionId);
     }
+
 
 
     @Override

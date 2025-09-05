@@ -40,7 +40,7 @@ public class ChatSession {
     private boolean favorite;
 
     @Column(name = "is_deleted", columnDefinition = "boolean default false") // 👈 already explicit
-    private boolean deleted;
+    private Boolean deleted;
 
     @OneToMany(mappedBy = "chatSession", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMessage> messages;

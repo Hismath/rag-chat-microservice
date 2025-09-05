@@ -24,7 +24,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     private static final AntPathMatcher MATCHER = new AntPathMatcher();
 
-    // Paths to skip
+ // Paths to skip
     private static final String[] PUBLIC_PATTERNS = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -32,11 +32,21 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             "/swagger-init.js",
             "/favicon.ico",
             "/webjars/**",
-            "/actuator", 
+
+            // Actuator endpoints
+            "/actuator",
             "/actuator/health",
             "/actuator/info",
-            "/actuator/metrics"
+            "/actuator/metrics",
+            "/actuator/loggers",
+            "/actuator/env",
+            "/actuator/beans",
+            "/actuator/threaddump",
+            "/actuator/httptrace",
+            "/actuator/caches",
+            "/actuator/scheduledtasks"
     };
+
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
